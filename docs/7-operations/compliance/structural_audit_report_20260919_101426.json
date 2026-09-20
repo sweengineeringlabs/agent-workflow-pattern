@@ -1,0 +1,426 @@
+{
+  "timestamp": "2026-09-19T08:14:26.615685+00:00",
+  "results": [
+    {
+      "id": "gitignore_has_target",
+      "category": "conventions",
+      "description": "`.gitignore` at the workspace root must contain a `target/` entry to exclude build artifacts.",
+      "result": {
+        "status": "pass"
+      },
+      "duration_ms": 0.7874
+    },
+    {
+      "id": "active_branch_is_dev",
+      "category": "project",
+      "description": "The branch checked out at the workspace root must match the configured dev_branch (default: dev).",
+      "result": {
+        "status": "fail",
+        "violations": [
+          {
+            "check_id": "active_branch_is_dev",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern",
+            "message": "Active branch is 'main', expected 'dev'",
+            "severity": "error",
+            "rule_type": "builtin:active_branch_is_dev",
+            "expected": "dev",
+            "actual": "main",
+            "fix_hint": "git checkout dev",
+            "llm_prompt": "WHAT: The branch checked out at the workspace root must match the configured\ndev_branch (`[config] dev_branch`, default `\"dev\"`).\n\nWHY: Committing local work directly on `main`, a stale feature branch, or\nwhatever branch happened to be checked out makes history hard to follow and\nrisks pushing unreviewed work to a protected branch by accident. Enforcing a\nsingle, predictable local-development branch keeps that discipline explicit\nrather than tribal knowledge.\n\nBEFORE (violating):\n  $ git branch --show-current\n  main                # local work committed directly on main  ❌\n\nAFTER (compliant):\n  $ git branch --show-current\n  dev                 # matches the configured dev_branch  ✅\n\nEDGE CASES:\n- Skipped entirely when the `CI` environment variable is set -- CI legitimately\n  checks out other pipeline branches (test, main, int, uat) to audit them, and\n  this rule targets local development only.\n- A project using a different trunk-adjacent branch name (e.g. \"develop\") can\n  override the default via `[config] dev_branch = \"develop\"`.\n- Detached HEAD or a directory outside any git repository cannot be evaluated\n  and passes rather than failing spuriously.\n",
+            "remediation_strategy": "manual",
+            "principles": [
+              "single_source_of_truth",
+              "explicit_over_implicit"
+            ]
+          }
+        ]
+      },
+      "duration_ms": 44.7761
+    },
+    {
+      "id": "build_bootstrap_exclusivity",
+      "category": "project",
+      "description": "The project root must not contain both a build.* script and a bootstrap.*.",
+      "result": {
+        "status": "pass"
+      },
+      "duration_ms": 0.2556
+    },
+    {
+      "id": "examples_dir_lib",
+      "category": "project",
+      "description": "Library crates should have an examples/ directory demonstrating canonical.",
+      "result": {
+        "status": "pass"
+      },
+      "duration_ms": 0.011
+    },
+    {
+      "id": "single_architecture_config",
+      "category": "project",
+      "description": "Exactly one architecture.toml may exist — either at the project root or.",
+      "result": {
+        "status": "pass"
+      },
+      "duration_ms": 0.1558
+    },
+    {
+      "id": "root_whitelist",
+      "category": "project",
+      "description": "Every file and directory at the project root must appear in the configured.",
+      "result": {
+        "status": "fail",
+        "violations": [
+          {
+            "check_id": "root_whitelist",
+            "path": "LICENSE-APACHE",
+            "message": "Unexpected entry 'LICENSE-APACHE' at project level (not in project whitelist)",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "Only entries from the project whitelist",
+            "actual": "LICENSE-APACHE",
+            "fix_hint": "Remove 'LICENSE-APACHE' if it doesn't belong at the project root, or add it to [[policy.project]] in architecture.policy.toml if it's an intentional entry",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "LICENSE-MIT",
+            "message": "Unexpected entry 'LICENSE-MIT' at project level (not in project whitelist)",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "Only entries from the project whitelist",
+            "actual": "LICENSE-MIT",
+            "fix_hint": "Remove 'LICENSE-MIT' if it doesn't belong at the project root, or add it to [[policy.project]] in architecture.policy.toml if it's an intentional entry",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.gitattributes",
+            "message": "Missing required entry '.gitattributes' at project level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".gitattributes",
+            "actual": "missing",
+            "fix_hint": "Create '.gitattributes' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.githooks",
+            "message": "Missing required entry '.githooks' at project level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".githooks",
+            "actual": "missing",
+            "fix_hint": "Create '.githooks' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.github",
+            "message": "Missing required entry '.github' at project level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".github",
+            "actual": "missing",
+            "fix_hint": "Create '.github' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "scm/src",
+            "message": "Unexpected entry 'scm/src' at workspace level (not in workspace whitelist)",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "Only entries from the workspace whitelist",
+            "actual": "scm/src",
+            "fix_hint": "Remove 'scm/src' if it doesn't belong at the workspace root, or add it to [[policy.workspace]] in architecture.policy.toml if it's an intentional entry",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.gitattributes",
+            "message": "Missing required entry 'scm/.gitattributes' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".gitattributes",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/.gitattributes' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.githooks",
+            "message": "Missing required entry 'scm/.githooks' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".githooks",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/.githooks' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\.github",
+            "message": "Missing required entry 'scm/.github' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": ".github",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/.github' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\CHANGELOG.md",
+            "message": "Missing required entry 'scm/CHANGELOG.md' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "CHANGELOG.md",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/CHANGELOG.md' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\SECURITY.md",
+            "message": "Missing required entry 'scm/SECURITY.md' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "SECURITY.md",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/SECURITY.md' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\bootstrap.ps1",
+            "message": "Missing required entry 'scm/bootstrap.ps1' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "bootstrap.ps1",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/bootstrap.ps1' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          },
+          {
+            "check_id": "root_whitelist",
+            "path": "\\\\?\\C:\\phd-systems\\swelabs\\agent-workflow-pattern\\bootstrap.sh",
+            "message": "Missing required entry 'scm/bootstrap.sh' at workspace level",
+            "severity": "error",
+            "rule_type": "entries_check",
+            "expected": "bootstrap.sh",
+            "actual": "missing",
+            "fix_hint": "Create 'scm/bootstrap.sh' -- it is required by [[policy.<name>]].entries.required",
+            "llm_prompt": "WHAT: Every file and directory at the project root must appear in the configured\nwhitelist — unlisted entries are a violation.\n\nWHY: An unconstrained root accumulates stray config files, IDE folders, and\ntemporary artifacts over time, burying the actual project structure and making\nthe top-level layout undiscoverable. The whitelist is a forcing function for\nintentional placement.\n\nBEFORE (violating):\n  /\n    .myeditor/        ❌ — not in whitelist\n    temp_output/      ❌ — not in whitelist\n    Cargo.toml\n\nAFTER (compliant):\n  /\n    Cargo.toml        ✅\n    bootstrap.sh      ✅\n    docs/             ✅\n\nEDGE CASES:\n- To legitimately add a new root entry, first add it to [[policy.project]]'s\n  entries list in policy/rules/policy.toml, then create the file/directory.\n- Hidden files starting with `.` that are needed (e.g. .gitignore, .github/)\n  should be in the whitelist; do not suppress the rule to avoid adding them.\n",
+            "principles": [
+              "screaming_architecture",
+              "locality_of_reference",
+              "single_responsibility"
+            ]
+          }
+        ]
+      },
+      "duration_ms": 2.5331
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 4,
+    "failed": 2,
+    "skipped": 0,
+    "duration_ms": 48.7649
+  },
+  "project_layout": "project",
+  "application_type": "lib",
+  "rule_labels": {
+    "core_no_external_io": [
+      "core",
+      "spi"
+    ],
+    "app_type_forbids_gateway_dir": [
+      "gateway"
+    ],
+    "saf_required_layers": [
+      "saf"
+    ],
+    "composition_root_required_layers": [
+      "saf"
+    ],
+    "core_filename_matches_type": [
+      "core",
+      "spi"
+    ],
+    "facade_required_layers": [
+      "saf"
+    ],
+    "port_forbids_impl_layer": [
+      "core",
+      "spi"
+    ],
+    "app_type_forbids_saf": [
+      "saf"
+    ],
+    "core_types_name_cohesive": [
+      "core",
+      "spi"
+    ],
+    "core_missing_port_candidate": [
+      "core",
+      "spi"
+    ],
+    "facade_forbids_gateway_dir": [
+      "gateway"
+    ],
+    "core_required_layers": [
+      "core",
+      "spi"
+    ],
+    "adapter_required_layers": [
+      "core",
+      "spi"
+    ],
+    "core_impl_name_has_trait_suffix": [
+      "core",
+      "spi"
+    ],
+    "api_required_layers": [
+      "api"
+    ],
+    "composition_root_forbids_impl_layer": [
+      "core",
+      "spi"
+    ],
+    "app_type_forbids_api": [
+      "api"
+    ],
+    "port_required_layers": [
+      "api"
+    ],
+    "core_structs_have_trait": [
+      "core",
+      "spi"
+    ],
+    "facade_forbids_impl_layer": [
+      "core",
+      "spi"
+    ],
+    "saf_only_forbids_api": [
+      "api"
+    ],
+    "no_traits_in_impl_layer": [
+      "core",
+      "spi"
+    ],
+    "core_structs_not_pub": [
+      "core",
+      "spi"
+    ],
+    "no_loose_core_files": [
+      "core",
+      "spi"
+    ],
+    "composition_root_forbids_gateway_dir": [
+      "gateway"
+    ]
+  },
+  "active_filters": [
+    "halted_at=project"
+  ],
+  "gate_pipeline": [
+    {
+      "name": "project",
+      "status": "fail",
+      "violations": 2
+    },
+    {
+      "name": "workspace",
+      "status": "skipped"
+    },
+    {
+      "name": "package",
+      "status": "skipped"
+    },
+    {
+      "name": "api",
+      "status": "skipped"
+    },
+    {
+      "name": "core",
+      "status": "skipped"
+    },
+    {
+      "name": "spi",
+      "status": "skipped"
+    },
+    {
+      "name": "saf",
+      "status": "skipped"
+    },
+    {
+      "name": "gateway",
+      "status": "skipped"
+    }
+  ],
+  "halted_at": "project"
+}
