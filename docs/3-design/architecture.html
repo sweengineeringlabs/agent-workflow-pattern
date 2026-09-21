@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-workflow-pattern Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e4e4e4; background: #0d1117; }
+    a { color: #6cb6ff; }
+    code, pre:not(.mermaid) { background: #161b22 !important; color: #e4e4e4; }
+    table { border-color: #30363d !important; }
+    th, td { border-color: #30363d !important; }
+    blockquote { border-left-color: #30363d; color: #9198a1; }
+    hr { border-color: #30363d; }
+  }
+  h1, h2, h3, h4 { line-height: 1.25; margin-top: 2rem; }
+  h1 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
+  h2 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
+  @media (prefers-color-scheme: dark) { h1, h2 { border-bottom-color: #30363d; } }
+  code {
+    background: #f6f8fa;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre:not(.mermaid) {
+    background: #f6f8fa;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  pre:not(.mermaid) code {
+    background: none;
+    padding: 0;
+  }
+  pre.mermaid {
+    background: transparent;
+    text-align: center;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 0.5rem 0.8rem;
+    text-align: left;
+  }
+  th { background: rgba(128,128,128,0.1); }
+  blockquote {
+    border-left: 4px solid #d0d7de;
+    margin-left: 0;
+    padding: 0.2rem 1rem;
+    color: #57606a;
+  }
+  a { color: #0969da; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+<h1 id="agent-workflow-pattern-architecture">agent-workflow-pattern
+Architecture</h1>
+<blockquote>
+<p><strong>Scope</strong>: High-level overview only. Implementation
+details belong in the <a
+href="../4-development/developer_guide.html">Developer Guide</a>.</p>
+</blockquote>
+<p><strong>Audience</strong>: Developers working on
+<code>agent-workflow-pattern</code>, or implementing a new real
+<code>Workflow</code>/<code>WorkflowStep</code>.</p>
+<h2 id="what">WHAT</h2>
+<p>The Workflow pattern: the contract for an agent’s goal-oriented,
+multi-step execution plan. A <code>Workflow</code> is a directed graph
+of <code>WorkflowStep</code>s with conditional routing — each step
+declares what to execute (a prompt), how
+(<code>WorkflowStepExecutor</code>), and where to route next
+(<code>WorkflowStepRouting</code>) on success, failure, or condition
+failure.</p>
+<p>Key capabilities: - <strong><code>Workflow</code></strong> — id,
+description, step lookup by id, the full ordered step-id list, and the
+entry point (<code>start_step_id</code>). -
+<strong><code>WorkflowStep</code></strong> — one step’s prompt, executor
+type, executor-specific params, turn/iteration limits, and routing on
+complete/fail/condition-fail. -
+<strong><code>WorkflowStepExecutor</code>/<code>WorkflowStepRouting</code></strong>
+— plain value enums; how a step runs, where a step goes next.</p>
+<h2 id="why">WHY</h2>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An agent needs a goal plan more structured than “keep prompting
+until done”</td>
+<td><code>Workflow</code>: an explicit graph of steps with real routing,
+not an implicit loop</td>
+</tr>
+<tr>
+<td>A step’s outcome (success, failure, a human rejecting a gate) each
+needs different next-step logic</td>
+<td><code>WorkflowStepRouting</code> gives each of the three cases
+(<code>on_complete</code>/<code>on_fail</code>/<code>on_condition_fail</code>)
+its own explicit routing</td>
+</tr>
+<tr>
+<td>Different steps need genuinely different execution mechanisms (an
+LLM call vs. a human approval vs. dispatching to another agent)</td>
+<td><code>WorkflowStepExecutor</code> names the mechanism per step, open
+to new variants without changing <code>WorkflowStep</code>’s own
+shape</td>
+</tr>
+<tr>
+<td>A step can legitimately loop (e.g. revise → discuss → revise
+again)</td>
+<td><code>max_iterations</code> on <code>WorkflowStep</code>, distinct
+from <code>max_turns</code> (per-step LLM-turn budget)</td>
+</tr>
+</tbody>
+</table>
+<p>Real example this contract models directly (from
+<code>llmboot</code>, this org’s own prior art):</p>
+<pre class="text"><code>propose → discuss (human_gate) → {
+  approve → integrate → implement → done
+  OR request_changes → revise → discuss (loop back)
+}</code></pre>
+<h2 id="how">HOW</h2>
+<h3 id="component-shape">Component Shape</h3>
+<pre class="mermaid"><code>flowchart TB
+    subgraph pattern[&quot;agent-workflow-pattern&quot;]
+        traits[&quot;traits/pattern.rs\nWorkflow (the graph)\nWorkflowStep (one node)\nWorkflowStepExecutor (vo: how)\nWorkflowStepRouting (vo: where next)&quot;]
+    end
+    DefaultWorkflow[&quot;agent-workflow-svc::DefaultWorkflow&quot;] -.-&gt;|implements| traits</code></pre>
+<p>Everything lives in one file, <code>src/traits/pattern.rs</code>
+(despite the filename, it holds the domain’s real traits, not a
+“Pattern” type — <code>src/traits/mod.rs</code> re-exports it flatly).
+<code>src/vo/</code> exists but is empty:
+<code>WorkflowStepExecutor</code>/<code>WorkflowStepRouting</code> are
+small enough to live alongside the traits that use them rather than in a
+separate file, and there is no other value object this domain needs.</p>
+<h3 id="zero-implementation-zero-dependencies">Zero implementation, zero
+dependencies</h3>
+<p>Per <a
+href="https://github.com/sweengineeringlabs/template-engine/blob/main/pattern_svc_workflow.md"><code>pattern_svc_workflow.md</code></a>’s
+“zero implementation” rule: this crate implements none of its own
+primary traits (<code>Workflow</code>, <code>WorkflowStep</code>) for
+any concrete type. <code>Cargo.toml</code> has an empty
+<code>[dependencies]</code> table — no <code>thiserror</code>, no
+<code>serde</code>, nothing. A real, runnable <code>Workflow</code> —
+<code>DefaultWorkflow</code>, a sequential executor with in-memory step
+storage — lives in the companion <a
+href="https://github.com/sweengineeringlabs/agent-workflow-svc"><code>agent-workflow-svc</code></a>
+repo, per the pattern/svc split this org uses for every domain in the
+<code>agent-spec</code> family.</p>
+<h3 id="why-this-crate-has-no-vodtoerror-folders">Why this crate has no
+<code>vo</code>/<code>dto</code>/<code>error</code> folders</h3>
+<p>Every value this domain needs (<code>WorkflowStepExecutor</code>,
+<code>WorkflowStepRouting</code>) is small enough to live directly in
+<code>traits/pattern.rs</code> next to the trait that uses it. There is
+no fallible operation declared on either trait, so there is no
+<code>error/</code> module — a real implementor’s own construction can
+fail (e.g. <code>agent-workflow-svc</code>’s
+<code>WorkflowBuilder::build</code> returns
+<code>Result&lt;impl Workflow, String&gt;</code>), but that is
+<code>-svc</code>-side behavior, not part of this contract.</p>
+<h2 id="documentation">Documentation</h2>
+<table>
+<colgroup>
+<col style="width: 41%" />
+<col style="width: 58%" />
+</colgroup>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../4-development/developer_guide.html">Developer
+Guide</a></td>
+<td>Module structure, dev workflow, conventions</td>
+</tr>
+<tr>
+<td><a
+href="https://github.com/sweengineeringlabs/agent-workflow-svc">agent-workflow-svc</a></td>
+<td>Real implementation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Status</strong>: Stable</p>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-workflow-pattern</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e4e4e4; background: #0d1117; }
+    a { color: #6cb6ff; }
+    code, pre:not(.mermaid) { background: #161b22 !important; color: #e4e4e4; }
+    table { border-color: #30363d !important; }
+    th, td { border-color: #30363d !important; }
+    blockquote { border-left-color: #30363d; color: #9198a1; }
+    hr { border-color: #30363d; }
+  }
+  h1, h2, h3, h4 { line-height: 1.25; margin-top: 2rem; }
+  h1 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
+  h2 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3rem; }
+  @media (prefers-color-scheme: dark) { h1, h2 { border-bottom-color: #30363d; } }
+  code {
+    background: #f6f8fa;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+  pre:not(.mermaid) {
+    background: #f6f8fa;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  pre:not(.mermaid) code {
+    background: none;
+    padding: 0;
+  }
+  pre.mermaid {
+    background: transparent;
+    text-align: center;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 0.5rem 0.8rem;
+    text-align: left;
+  }
+  th { background: rgba(128,128,128,0.1); }
+  blockquote {
+    border-left: 4px solid #d0d7de;
+    margin-left: 0;
+    padding: 0.2rem 1rem;
+    color: #57606a;
+  }
+  a { color: #0969da; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+<h1 id="agent-workflow-pattern">agent-workflow-pattern</h1>
+<blockquote>
+<p><strong>TLDR:</strong> The Workflow pattern for agents —
+<code>Workflow</code>/<code>WorkflowStep</code> (a directed graph of
+steps with conditional routing),
+<code>WorkflowStepExecutor</code>/<code>WorkflowStepRouting</code> (how
+a step runs, where it goes next). Zero implementation, zero
+dependencies. See <a href="docs/3-design/architecture.html">Overview</a>
+for details.</p>
+</blockquote>
+<h2 id="quick-start">Quick Start</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode rust"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">agent_workflow_pattern::</span><span class="op">{</span>Workflow<span class="op">,</span> WorkflowStep<span class="op">,</span> WorkflowStepExecutor<span class="op">,</span> WorkflowStepRouting<span class="op">};</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> describe(workflow<span class="op">:</span> <span class="op">&amp;</span><span class="kw">dyn</span> Workflow) <span class="op">-&gt;</span> <span class="dt">String</span> <span class="op">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">format!</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;{}: {} step(s), starts at &#39;{}&#39;&quot;</span><span class="op">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        workflow<span class="op">.</span>id()<span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        workflow<span class="op">.</span>step_ids()<span class="op">.</span>len()<span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        workflow<span class="op">.</span>start_step_id()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><code>Workflow</code>/<code>WorkflowStep</code> are traits with no
+implementation here — a real, runnable implementation lives in <a
+href="https://github.com/sweengineeringlabs/agent-workflow-svc"><code>agent-workflow-svc</code></a>.</p>
+<h2 id="api">API</h2>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 68%" />
+</colgroup>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Workflow</code></td>
+<td>An agent workflow — id, description, steps, routing, start step</td>
+</tr>
+<tr>
+<td><code>WorkflowStep</code></td>
+<td>A single step — prompt, executor, params, turn/iteration limits,
+routing</td>
+</tr>
+<tr>
+<td><code>WorkflowStepExecutor</code></td>
+<td>How a step runs: <code>Prompt</code> (LLM call),
+<code>HumanGate</code> (approval), <code>A2ADispatch</code></td>
+</tr>
+<tr>
+<td><code>WorkflowStepRouting</code></td>
+<td>Where a step routes next: <code>Next(id)</code>, <code>Done</code>,
+<code>Failed</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="documentation">Documentation</h2>
+<table>
+<colgroup>
+<col style="width: 43%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="docs/3-design/architecture.html">Architecture</a></td>
+<td>Component shape, zero-implementation rule</td>
+</tr>
+<tr>
+<td><a href="docs/4-development/developer_guide.html">Developer
+Guide</a></td>
+<td>Module structure, workflow, conventions</td>
+</tr>
+<tr>
+<td><a
+href="https://github.com/sweengineeringlabs/agent-workflow-svc">agent-workflow-svc</a></td>
+<td>Real implementation: <code>DefaultWorkflow</code>,
+<code>WorkflowFactory</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="license">License</h2>
+<p>MIT OR Apache-2.0</p>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });
+</script>
+</body>
+</html>
