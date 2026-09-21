@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use crate::vo::PatternType;
+
 /// A single step in a workflow — what to do, how to execute it, and where to go next.
 pub trait WorkflowStep: Send + Sync {
     /// Unique step identifier (e.g., "propose", "discuss", "approve").
@@ -12,6 +14,13 @@ pub trait WorkflowStep: Send + Sync {
 
     /// Executor type: how this step runs (prompt, human_gate, a2a_dispatch).
     fn executor(&self) -> WorkflowStepExecutor;
+
+    /// Which conversation-loop pattern this step's completion call runs under. Only
+    /// meaningful when [`Self::executor`] is [`WorkflowStepExecutor::Prompt`] -- a
+    /// `HumanGate`/`A2ADispatch` step doesn't run a conversation loop at all, so a real
+    /// implementor typically reports a default (e.g. [`PatternType::React`]) for those without
+    /// it being consulted anywhere.
+    fn pattern_type(&self) -> PatternType;
 
     /// Executor-specific parameters (e.g., timeout_secs for human_gate).
     fn params(&self) -> &HashMap<String, String>;
