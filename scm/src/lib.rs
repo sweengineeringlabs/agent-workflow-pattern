@@ -6,5 +6,7 @@
 #![warn(missing_docs)]
 
 mod traits;
+mod vo;
 
 pub use traits::*;
+pub use vo::*;
