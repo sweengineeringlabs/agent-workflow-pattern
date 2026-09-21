@@ -1,4 +1,4 @@
-# agent-workflow-pattern Architecture
+# Agent Workflow Architecture
 
 > **Scope**: High-level overview only. Implementation details belong in the
 > [Developer Guide](../4-development/developer_guide.md).

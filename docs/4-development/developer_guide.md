@@ -1,4 +1,4 @@
-# agent-workflow-pattern Developer Guide
+# Agent Workflow Developer Guide
 
 ## Overview
 

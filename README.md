@@ -1,4 +1,4 @@
-# agent-workflow-pattern
+# Agent Workflow
 
 > **TLDR:** The Workflow pattern for agents — `Workflow`/`WorkflowStep` (a directed graph of
 > steps with conditional routing), `WorkflowStepExecutor`/`WorkflowStepRouting` (how a step
