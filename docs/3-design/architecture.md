@@ -43,20 +43,12 @@ propose → discuss (human_gate) → {
 
 ### Component Shape
 
-```
-┌──────────────────────────────────────────┐
-│           agent-workflow-pattern           │
-│                                            │
-│  traits/pattern.rs                        │
-│    Workflow            (the graph)        │
-│    WorkflowStep        (one node)         │
-│    WorkflowStepExecutor (vo: how)         │
-│    WorkflowStepRouting  (vo: where next)  │
-└──────────────────────────────────────────┘
-                    ▲
-                    │ implements
-                    │
-       agent-workflow-svc::DefaultWorkflow
+```mermaid
+flowchart TB
+    subgraph pattern["agent-workflow-pattern"]
+        traits["traits/pattern.rs\nWorkflow (the graph)\nWorkflowStep (one node)\nWorkflowStepExecutor (vo: how)\nWorkflowStepRouting (vo: where next)"]
+    end
+    DefaultWorkflow["agent-workflow-svc::DefaultWorkflow"] -.->|implements| traits
 ```
 
 Everything lives in one file, `src/traits/pattern.rs` (despite the filename, it holds the
